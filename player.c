@@ -10,7 +10,7 @@ void static player_animation(struct Player *player);
 void player_init(struct Player *player)
 {
 	glCreateVertexArrays(1, &player->vao);
-	player->texture = load_texture("player.png");
+	player->texture = load_texture("res/player.png");
 	player->program = load_program("player.vs", 0, 0, 0, "player.fs");
 
 	player->x = 32;

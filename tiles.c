@@ -9,7 +9,7 @@ void tiles_init(struct Tiles *tiles, SDL_Window *window, int tiles_x, int tiles_
 	tiles->tiles_y = tiles_y;
 
 	glCreateVertexArrays(1, &tiles->vao);
-	tiles->tileset_texture = load_texture("tiles.png");
+	tiles->tileset_texture = load_texture("res/tiles.png");
 	tiles->program = load_program("tiles.vs", 0, 0, 0, "tiles.fs");
 
 	/* Generate the tileset */
