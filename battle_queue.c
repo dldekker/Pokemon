@@ -1,5 +1,7 @@
 #include "battle.h"
 
+#include <stdlib.h>
+
 void queue_init(struct BattleQueue *queue)
 {
 	queue->top = NULL;

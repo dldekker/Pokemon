@@ -1,5 +1,7 @@
 #include "tiles.h"
 
+#include <stdlib.h>
+
 #include "util.h"
 
 void tiles_init(struct Tiles *tiles, SDL_Window *window, int tiles_x, int tiles_y)

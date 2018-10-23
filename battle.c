@@ -1,5 +1,9 @@
 #include "battle.h"
 
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+
 void battle_init(struct Battle *battle, struct Player *player)
 {
 	battle->player = player;

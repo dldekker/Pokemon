@@ -1,5 +1,7 @@
 #include "player.h"
 
+#include <math.h>
+
 #include "util.h"
 
 #define SPEED 0.80
