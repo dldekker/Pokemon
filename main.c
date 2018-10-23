@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
 	
 	srand(time(NULL));
 
-	state.window = SDL_CreateWindow("3d", -1, -1, 1024, 768, SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL);
+	state.window = SDL_CreateWindow("3d", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1024, 768, SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL);
 	SDL_GLContext context = SDL_GL_CreateContext(state.window);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
