@@ -18,7 +18,7 @@ void queue_enqueue(struct BattleQueue *queue, struct Node node)
 	queue->top = new_node;
 }
 
-int queue_get(struct BattleQueue *queue, struct Node *node)
+int queue_get(struct BattleQueue *queue, struct Node **node)
 {
 	struct Node *tmp = queue->top;
 
@@ -26,14 +26,14 @@ int queue_get(struct BattleQueue *queue, struct Node *node)
 		return -1;
 	
 	if (tmp->next == NULL) {
-		*node = *tmp;
+		*node = tmp;
 		return 0;
 	}
 
 	while (tmp->next->next != NULL)
 		tmp = tmp->next;
 	
-	*node = *tmp->next;
+	*node = tmp->next;
 
 	return 0;
 }

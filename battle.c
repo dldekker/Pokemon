@@ -4,16 +4,18 @@
 #include <string.h>
 #include <stdio.h>
 
+void action_idle(struct Battle *battle, struct Node *action);
+void action_debug_message(struct Battle *battle, struct Node *action);
+void enqueue_idle(struct BattleQueue *queue);
+void enqueue_debug_message(struct BattleQueue *queue, char *str);
+
 void battle_init(struct Battle *battle, struct Player *player)
 {
 	battle->player = player;
 
 	queue_init(&battle->queue);
 
-	struct Node idle;
-	idle.type = IDLE;
-	idle.data.idle.wait_until = SDL_GetTicks() + 1000;
-	queue_enqueue(&battle->queue, idle);
+	enqueue_idle(&battle->queue);
 }
 
 void battle_start(struct Battle *battle)
@@ -22,36 +24,18 @@ void battle_start(struct Battle *battle)
 
 void battle_update(struct Battle *battle)
 {
-	struct Node action;
+	struct Node *action;
 
 	if (queue_get(&battle->queue, &action) < 0) {
-		printf("ERROR: QUEUE EMPTY\n");
+		fprintf(stderr, "ERROR: QUEUE EMPTY\n");
 		abort();
 	}
 
 	// If we are idle, just repush the idle action.
-	if (action.type == IDLE) {
-		/* The time has been reached. */
-		if (action.data.idle.wait_until < SDL_GetTicks()) {
-			queue_dequeue(&battle->queue);
-
-			int ret = queue_get(&battle->queue, &action);
-			if (action.type != IDLE || ret < 0) {
-				printf(".\n");
-				struct Node idle;
-				idle.type = IDLE;
-				idle.data.idle.wait_until = SDL_GetTicks() + 1000;
-				queue_enqueue(&battle->queue, idle);
-			}
-		}
-	} else if (action.type == MESSAGE) {
-		queue_dequeue(&battle->queue);
-		printf("%s", action.data.message.message);
-
-		struct Node idle;
-		idle.type = IDLE;
-		idle.data.idle.wait_until = SDL_GetTicks() + 1000;
-		queue_enqueue(&battle->queue, idle);
+	if (action->type == IDLE) {
+		action_idle(battle, action);
+	} else if (action->type == DEBUG_MESSAGE) {
+		action_debug_message(battle, action);
 	}
 }
 
@@ -64,10 +48,11 @@ void battle_event(struct Battle *battle, SDL_Event *e)
 {
 	if (e->type == SDL_KEYDOWN) {
 		if (e->key.keysym.sym == SDLK_p) {
-			struct Node m;
-			m.type = MESSAGE;
-			strcpy(m.data.message.message, "Message!\n");
-			queue_enqueue(&battle->queue, m);
+			enqueue_debug_message(&battle->queue, "DEBUG1");
+			enqueue_debug_message(&battle->queue, "DEBUG2");
+			enqueue_debug_message(&battle->queue, "DEBUG3");
+			enqueue_debug_message(&battle->queue, "DEBUG4");
+			enqueue_idle(&battle->queue);
 		}
 	}
 }
@@ -75,4 +60,50 @@ void battle_event(struct Battle *battle, SDL_Event *e)
 void battle_destroy(struct Battle *battle)
 {
 
+}
+
+/* HANDLE BATTLE QUEUE ACTIONS */
+void action_idle(struct Battle *battle, struct Node *action)
+{
+	/* The time has been reached. */
+	if (action->data.idle.wait_until < SDL_GetTicks()) {
+		queue_dequeue(&battle->queue);
+
+		/* If there are no more nodes, insert an idle node */
+		int ret = queue_get(&battle->queue, &action);
+		if (action->type != IDLE || ret < 0) {
+			enqueue_idle(&battle->queue);
+		}
+	}
+	printf(".");
+}
+void action_debug_message(struct Battle *battle, struct Node *action)
+{
+	long delta = SDL_GetTicks() - action->data.debug_message.start_time;
+	if (delta > 500) {
+		action->data.debug_message.start_time = SDL_GetTicks();
+		printf("%c", action->data.debug_message.message[action->data.debug_message.cur]);
+		action->data.debug_message.cur += 1;
+		if (action->data.debug_message.cur >= strlen(action->data.debug_message.message)) {
+			queue_dequeue(&battle->queue);
+		}
+	}
+}
+
+/* HELPERS TO PLACE ACTIONS ON THE QUEUE */
+void enqueue_idle(struct BattleQueue *queue)
+{
+	struct Node n;
+	n.type = IDLE;
+	n.data.idle.wait_until = SDL_GetTicks() + 1000;
+	queue_enqueue(queue, n);
+}
+void enqueue_debug_message(struct BattleQueue *queue, char *str)
+{
+	struct Node n;
+	n.type = DEBUG_MESSAGE;
+	n.data.debug_message.start_time = SDL_GetTicks();
+	n.data.debug_message.cur = 0;
+	strcpy(n.data.debug_message.message, str);
+	queue_enqueue(queue, n);
 }
