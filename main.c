@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 
@@ -61,6 +62,9 @@ int main(int argc, char *argv[])
 		render(&state);
 
 		SDL_GL_SwapWindow(state.window);
+		
+		 // Flush, so any printfs are actually printed (mingw hack).
+		fflush(stdout);
 	}
 
 	return EXIT_SUCCESS;
