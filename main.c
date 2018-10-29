@@ -53,17 +53,31 @@ int main(int argc, char *argv[])
 	tiles_init(&state.tiles, state.window, 100, 100);
 	player_init(&state.player);
 	battle_init(&state.battle, &state.player);
-
+	
+	// The update time increment.
+	double dt = 0.01;
+	double current_time = SDL_GetTicks() / 1000.0;
+	double accumulator = 0.0;
+	
 	while (state.quit == false) {
-		events(&state);
-
-		update(&state);
+		double new_time = SDL_GetTicks() / 1000.0;
+		double frame_time = new_time - current_time;
+		if (frame_time > 0.25)
+			frame_time = 0.25;
+		current_time = new_time;
+		
+		accumulator += frame_time;
+		
+		while (accumulator >= dt) {
+			events(&state);
+			update(&state);
+			accumulator -= dt;
+		}
 
 		render(&state);
-
 		SDL_GL_SwapWindow(state.window);
 		
-		 // Flush, so any printfs are actually printed (mingw hack).
+		// Flush, so any printfs are actually printed (mingw hack).
 		fflush(stdout);
 	}
 
