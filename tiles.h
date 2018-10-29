@@ -14,9 +14,10 @@ struct Tiles {
 
 	int tiles_x;
 	int tiles_y;
-	int *tiles; 
+	int *tiles;
+	GLuint pos_buffer;
+	GLuint uv_buffer;
 	GLuint tile_buffer;
-	GLuint vertex_buffer;
 };
 
 void tiles_init(struct Tiles *tiles, SDL_Window *window, int tiles_x, int tiles_y);

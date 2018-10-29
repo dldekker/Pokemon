@@ -19,57 +19,73 @@ void tiles_init(struct Tiles *tiles, SDL_Window *window, int tiles_x, int tiles_
 
 	/* Generate the vertex information used for rendering */
 	int k = 0;
-	int *tmp = malloc(sizeof(int) * 5 * tiles_x * tiles_y * 6);
+	int *tmp0 = malloc(sizeof(int) * 2 * tiles_x * tiles_y * 6);
+	int *tmp1 = malloc(sizeof(int) * 2 * tiles_x * tiles_y * 6);
+	int *tmp2 = malloc(sizeof(int) * 1 * tiles_x * tiles_y * 6);
 	for (int i = 0; i < tiles_y; ++i) {
 		for (int j = 0; j < tiles_x; ++j) {
-			int base = (i*tiles_x+j)*30;
+			int base = (i*tiles_x+j);
 			int r = rand() % 2;
-			if (r == 1) r = 88 + 5;
+			if (r == 1) r = 88+5;
 			if (r == 0) r = 1;
-			tmp[base+ 0] = j * TILE_SIZE;
-			tmp[base+ 1] = i * TILE_SIZE;
-			tmp[base+ 2] = 0;
-			tmp[base+ 3] = 0;
-			tmp[base+ 4] = r;
-			tmp[base+ 5] = j * TILE_SIZE;
-			tmp[base+ 6] = (i+1) * TILE_SIZE;
-			tmp[base+ 7] = 0;
-			tmp[base+ 8] = 1;
-			tmp[base+ 9] = r;
-			tmp[base+10] = (j+1) * TILE_SIZE;
-			tmp[base+11] = (i+1) * TILE_SIZE;
-			tmp[base+12] = 1;
-			tmp[base+13] = 1;
-			tmp[base+14] = r;
-			tmp[base+15] = j * TILE_SIZE;
-			tmp[base+16] = i * TILE_SIZE;
-			tmp[base+17] = 0;
-			tmp[base+18] = 0;
-			tmp[base+19] = r;
-			tmp[base+20] = (j+1) * TILE_SIZE;
-			tmp[base+21] = i * TILE_SIZE;
-			tmp[base+22] = 1;
-			tmp[base+23] = 0;
-			tmp[base+24] = r;
-			tmp[base+25] = (j+1) * TILE_SIZE;
-			tmp[base+26] = (i+1) * TILE_SIZE;
-			tmp[base+27] = 1;
-			tmp[base+28] = 1;
-			tmp[base+29] = r;
+			tmp0[base*12+ 0] = j * TILE_SIZE;
+			tmp0[base*12+ 1] = i * TILE_SIZE;
+			tmp0[base*12+ 2] = j * TILE_SIZE;
+			tmp0[base*12+ 3] = (i+1) * TILE_SIZE;
+			tmp0[base*12+ 4] = (j+1) * TILE_SIZE;
+			tmp0[base*12+ 5] = (i+1) * TILE_SIZE;
+			tmp0[base*12+ 6] = j * TILE_SIZE;
+			tmp0[base*12+ 7] = i * TILE_SIZE;
+			tmp0[base*12+ 8] = (j+1) * TILE_SIZE;
+			tmp0[base*12+ 9] = i * TILE_SIZE;
+			tmp0[base*12+10] = (j+1) * TILE_SIZE;
+			tmp0[base*12+11] = (i+1) * TILE_SIZE;
+			tmp1[base*12+ 0] = 0;
+			tmp1[base*12+ 1] = 0;
+			tmp1[base*12+ 2] = 0;
+			tmp1[base*12+ 3] = 1;
+			tmp1[base*12+ 4] = 1;
+			tmp1[base*12+ 5] = 1;
+			tmp1[base*12+ 6] = 0;
+			tmp1[base*12+ 7] = 0;
+			tmp1[base*12+ 8] = 1;
+			tmp1[base*12+ 9] = 0;
+			tmp1[base*12+10] = 1;
+			tmp1[base*12+11] = 1;
+			tmp2[base*6+ 0] = r;
+			tmp2[base*6+ 1] = r;
+			tmp2[base*6+ 2] = r;
+			tmp2[base*6+ 3] = r;
+			tmp2[base*6+ 4] = r;
+			tmp2[base*6+ 5] = r;
 		}
 	}
-	glCreateBuffers(1, &tiles->vertex_buffer);
-	glNamedBufferStorage(tiles->vertex_buffer,
-			sizeof(int) * 5 * tiles_x * tiles_y * 6,
-			tmp,
+	glCreateBuffers(1, &tiles->pos_buffer);
+	glCreateBuffers(1, &tiles->uv_buffer);
+	glCreateBuffers(1, &tiles->tile_buffer);
+	
+	glNamedBufferStorage(tiles->pos_buffer,
+			sizeof(int) * 2 * tiles_x * tiles_y * 6,
+			tmp0,
 			0);
-	glVertexArrayVertexBuffer(tiles->vao, 0, tiles->vertex_buffer, 0, sizeof(int) * 5);
+	glNamedBufferStorage(tiles->uv_buffer,
+			sizeof(int) * 2 * tiles_x * tiles_y * 6,
+			tmp1,
+			0);
+	glNamedBufferStorage(tiles->tile_buffer,
+			sizeof(int) * 1 * tiles_x * tiles_y * 6,
+			tmp2,
+			0);
+	glVertexArrayVertexBuffer(tiles->vao, 0, tiles->pos_buffer, 0, sizeof(int) * 2);
+	glVertexArrayVertexBuffer(tiles->vao, 1, tiles->uv_buffer, 0, sizeof(int) * 2);
+	glVertexArrayVertexBuffer(tiles->vao, 2, tiles->tile_buffer, 0, sizeof(int) * 1);
+	
 	glVertexArrayAttribBinding(tiles->vao, 0, 0);
-	glVertexArrayAttribBinding(tiles->vao, 1, 0);
-	glVertexArrayAttribBinding(tiles->vao, 2, 0);
+	glVertexArrayAttribBinding(tiles->vao, 1, 1);
+	glVertexArrayAttribBinding(tiles->vao, 2, 2);
 	glVertexArrayAttribIFormat(tiles->vao, 0, 2, GL_INT, 0); //POS (2 INT)
-	glVertexArrayAttribIFormat(tiles->vao, 1, 2, GL_INT, 8); //UV (2 INT)
-	glVertexArrayAttribIFormat(tiles->vao, 2, 1, GL_INT, 16); //TILE (1 INT)
+	glVertexArrayAttribIFormat(tiles->vao, 1, 2, GL_INT, 0); //UV (2 INT)
+	glVertexArrayAttribIFormat(tiles->vao, 2, 1, GL_INT, 0); //TILE (1 INT)
 	glEnableVertexArrayAttrib(tiles->vao, 0);
 	glEnableVertexArrayAttrib(tiles->vao, 1);
 	glEnableVertexArrayAttrib(tiles->vao, 2);
