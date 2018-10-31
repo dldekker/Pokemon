@@ -89,7 +89,10 @@ void update(struct State *state)
 {
 	if (!battle) {
 		tiles_update(&state->tiles);
+		bool old_battle = battle;
 		player_update(&state->player, &battle);
+		if (old_battle != battle)
+			battle_start(&state->battle);
 	} else {
 		battle_update(&state->battle);
 	}

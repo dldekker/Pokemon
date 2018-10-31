@@ -3,7 +3,11 @@
 
 #include "player.h"
 
-enum NodeType {IDLE, DEBUG_MESSAGE};
+enum NodeType {
+	IDLE,
+	DEBUG_MESSAGE,
+	SCREEN_REVEAL
+};
 
 struct Node {
 	enum NodeType type;
@@ -13,9 +17,14 @@ struct Node {
 			long start_time;
 			int cur;
 		} debug_message;
+		
 		struct {
 			int wait_until;
 		} idle;
+		
+		struct {
+			long start_time;
+		} screen_reveal;
 	} data;
 
 	struct Node *next;
