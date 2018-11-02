@@ -8,6 +8,8 @@ void action_idle(struct Battle *battle, struct Node *action);
 void action_debug_message(struct Battle *battle, struct Node *action);
 void action_screen_reveal(struct Battle *battle, struct Node *action);
 
+void render_screen_reveal(struct Battle *battle, struct Node *action);
+
 void enqueue_idle(struct BattleQueue *queue);
 void enqueue_debug_message(struct BattleQueue *queue, char *str);
 void enqueue_screen_reveal(struct BattleQueue *queue);
@@ -48,7 +50,17 @@ void battle_update(struct Battle *battle)
 
 void battle_render(struct Battle *battle)
 {
-	
+	struct Node *action;
+
+	if (queue_get(&battle->queue, &action) < 0) {
+		fprintf(stderr, "ERROR: QUEUE EMPTY\n");
+		abort();
+	}
+
+	// If we are idle, just repush the idle action.
+	if (action->type == SCREEN_REVEAL) {
+		render_screen_reveal(battle, action);
+	}
 }
 
 void battle_event(struct Battle *battle, SDL_Event *e)
@@ -70,9 +82,9 @@ void battle_destroy(struct Battle *battle)
 }
 
 /* HANDLE BATTLE QUEUE ACTION RENDERS (these must *not* change any state */
-void action_screen_reveal(struct Battle *battle)
+void render_screen_reveal(struct Battle *battle, struct Node *action)
 {
-	/* Rnder the background */
+	/* Render the background */
 	
 	
 	/* Render the black eclipse above it */
