@@ -59,6 +59,9 @@ int main(int argc, char *argv[])
 	double current_time = SDL_GetTicks() / 1000.0;
 	double accumulator = 0.0;
 	
+	/* We want to have done at least one update before we render */
+
+	
 	while (state.quit == false) {
 		double new_time = SDL_GetTicks() / 1000.0;
 		double frame_time = new_time - current_time;
@@ -111,7 +114,7 @@ void render(struct State *state)
 		tiles_render(&state->tiles, state->cam_x, state->cam_y, state->cam_zoom);
 		player_render(&state->player, x, y, state->cam_x, state->cam_y, state->cam_zoom);
 	} else {
-		battle_render(&state->battle);
+		battle_render(&state->battle, x, y);
 	}
 }
 

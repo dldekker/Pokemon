@@ -8,36 +8,43 @@ void action_idle(struct Battle *battle, struct Node *action);
 void action_debug_message(struct Battle *battle, struct Node *action);
 void action_screen_reveal(struct Battle *battle, struct Node *action);
 
-void render_screen_reveal(struct Battle *battle, struct Node *action);
+void render_idle(struct Battle *battle, struct Node *action, int w, int h);
+void render_debug_message(struct Battle *battle, struct Node *action, int w, int h);
+void render_screen_reveal(struct Battle *battle, struct Node *action, int w, int h);
 
 void enqueue_idle(struct BattleQueue *queue);
 void enqueue_debug_message(struct BattleQueue *queue, char *str);
-void enqueue_screen_reveal(struct BattleQueue *queue);
+void enqueue_screen_reveal(struct Battle *battle, struct BattleQueue *queue, float fade_time);
 
 void battle_init(struct Battle *battle, struct Player *player)
 {
 	battle->player = player;
 
 	queue_init(&battle->queue);
+	
+	sprite_init(&battle->s, "res/battle_background.png", 0, 0, 1024, 768);
 }
 
 void battle_start(struct Battle *battle)
 {
 	/* Push the initial actions on the queue */
-	enqueue_screen_reveal(&battle->queue);
+	enqueue_screen_reveal(battle, &battle->queue, 1);
 	enqueue_debug_message(&battle->queue, "TRAINER JOEY is ready to battle!\n");
 	enqueue_idle(&battle->queue);
 }
 
 void battle_update(struct Battle *battle)
 {
-	struct Node *action;
+	struct Node *action, *tmp;
+	enum NodeType old_type;
 
 	if (queue_get(&battle->queue, &action) < 0) {
 		fprintf(stderr, "ERROR: QUEUE EMPTY\n");
 		abort();
 	}
-
+	
+	old_type = action->type;
+	
 	// If we are idle, just repush the idle action.
 	if (action->type == IDLE) {
 		action_idle(battle, action);
@@ -48,7 +55,7 @@ void battle_update(struct Battle *battle)
 	}
 }
 
-void battle_render(struct Battle *battle)
+void battle_render(struct Battle *battle, int w, int h)
 {
 	struct Node *action;
 
@@ -59,7 +66,9 @@ void battle_render(struct Battle *battle)
 
 	// If we are idle, just repush the idle action.
 	if (action->type == SCREEN_REVEAL) {
-		render_screen_reveal(battle, action);
+		render_screen_reveal(battle, action, w, h);
+	} else if (action->type == DEBUG_MESSAGE) {
+		render_debug_message(battle, action, w, h);
 	}
 }
 
@@ -82,10 +91,20 @@ void battle_destroy(struct Battle *battle)
 }
 
 /* HANDLE BATTLE QUEUE ACTION RENDERS (these must *not* change any state */
-void render_screen_reveal(struct Battle *battle, struct Node *action)
+void render_idle(struct Battle *battle, struct Node *action, int w, int h)
 {
 	/* Render the background */
-	
+	sprite_render(&battle->s, w, h);
+}
+void render_debug_message(struct Battle *battle, struct Node *action, int w, int h)
+{
+	/* Render the background */
+	sprite_render(&battle->s, w, h);
+}
+void render_screen_reveal(struct Battle *battle, struct Node *action, int w, int h)
+{
+	/* Render the background */
+	sprite_render(&battle->s, w, h);
 	
 	/* Render the black eclipse above it */
 	
@@ -125,9 +144,10 @@ void action_screen_reveal(struct Battle *battle, struct Node *action)
 		action->data.screen_reveal.start_time = SDL_GetTicks();
 	
 	long delta = SDL_GetTicks() - action->data.screen_reveal.start_time;
-	printf("TIME: %i\n", delta);
+	sprite_set_alpha(&battle->s, (float)delta / action->data.screen_reveal.fade_time);
+	//printf("TIME: %i\n", delta);
 	
-	if (delta > 5000)
+	if (delta > action->data.screen_reveal.fade_time)
 		queue_dequeue(&battle->queue);
 }
 
@@ -148,10 +168,13 @@ void enqueue_debug_message(struct BattleQueue *queue, char *str)
 	strcpy(n.data.debug_message.message, str);
 	queue_enqueue(queue, n);
 }
-void enqueue_screen_reveal(struct BattleQueue *queue)
+void enqueue_screen_reveal(struct Battle *battle, struct BattleQueue *queue, float fade_time)
 {
 	struct Node n;
 	n.type = SCREEN_REVEAL;
 	n.data.screen_reveal.start_time = -1;
+	n.data.screen_reveal.fade_time = fade_time * 1000;
+	printf("%i\n", n.data.screen_reveal.fade_time);
+	sprite_set_alpha(&battle->s, 0);
 	queue_enqueue(queue, n);
 }

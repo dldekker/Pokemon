@@ -2,6 +2,7 @@
 #define BATTLE_H
 
 #include "player.h"
+#include "sprite.h"
 
 enum NodeType {
 	IDLE,
@@ -24,6 +25,7 @@ struct Node {
 		
 		struct {
 			long start_time;
+			long fade_time;
 		} screen_reveal;
 	} data;
 
@@ -39,12 +41,16 @@ struct Battle {
 	struct Player *player;
 
 	struct BattleQueue queue;
+	
+	struct Sprite s;
+	
+	bool new_action;
 };
 
 void battle_init(struct Battle *battle, struct Player *player);
 void battle_start(struct Battle *battle);
 void battle_update(struct Battle *battle);
-void battle_render(struct Battle *battle);
+void battle_render(struct Battle *battle, int w, int h);
 void battle_event(struct Battle *battle, SDL_Event *e);
 void battle_destroy(struct Battle *battle);
 
