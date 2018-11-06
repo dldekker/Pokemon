@@ -5,15 +5,15 @@
 #include <stdio.h>
 
 void action_idle(struct Battle *battle, struct Node *action);
-void action_debug_message(struct Battle *battle, struct Node *action);
+void action_message(struct Battle *battle, struct Node *action);
 void action_screen_reveal(struct Battle *battle, struct Node *action);
 
 void render_idle(struct Battle *battle, struct Node *action, int w, int h);
-void render_debug_message(struct Battle *battle, struct Node *action, int w, int h);
+void render_message(struct Battle *battle, struct Node *action, int w, int h);
 void render_screen_reveal(struct Battle *battle, struct Node *action, int w, int h);
 
 void enqueue_idle(struct BattleQueue *queue);
-void enqueue_debug_message(struct BattleQueue *queue, char *str);
+void enqueue_message(struct Battle *battle, struct BattleQueue *queue, char *str);
 void enqueue_screen_reveal(struct Battle *battle, struct BattleQueue *queue, float fade_time);
 
 void battle_init(struct Battle *battle, struct Player *player)
@@ -22,14 +22,19 @@ void battle_init(struct Battle *battle, struct Player *player)
 
 	queue_init(&battle->queue);
 	
-	sprite_init(&battle->s, "res/battle_background.png", 0, 0, 1024, 768);
+	sprite_init(&battle->s, "res/battle_background.png", 0, 0, 960, 640);
+	battletext_init(&battle->battletext, 40, 480, 880, 140);
+	
+	battle->key = false;
 }
 
 void battle_start(struct Battle *battle)
 {
 	/* Push the initial actions on the queue */
-	enqueue_screen_reveal(battle, &battle->queue, 1);
-	enqueue_debug_message(&battle->queue, "TRAINER JOEY is ready to battle!\n");
+	enqueue_screen_reveal(battle, &battle->queue, 0.3);
+	enqueue_message(battle, &battle->queue, "TRAINER RICK is very ready to battle!!!");
+	enqueue_message(battle, &battle->queue, "TRAINER RICK used BULBASAUR.");
+	enqueue_message(battle, &battle->queue, "CHARMANDER, I choose you!");
 	enqueue_idle(&battle->queue);
 }
 
@@ -48,8 +53,8 @@ void battle_update(struct Battle *battle)
 	// If we are idle, just repush the idle action.
 	if (action->type == IDLE) {
 		action_idle(battle, action);
-	} else if (action->type == DEBUG_MESSAGE) {
-		action_debug_message(battle, action);
+	} else if (action->type == MESSAGE) {
+		action_message(battle, action);
 	} else if (action->type == SCREEN_REVEAL) {
 		action_screen_reveal(battle, action);
 	}
@@ -65,10 +70,12 @@ void battle_render(struct Battle *battle, int w, int h)
 	}
 
 	// If we are idle, just repush the idle action.
-	if (action->type == SCREEN_REVEAL) {
+	if (action->type == IDLE) {
+		render_idle(battle, action, w, h);
+	} else if (action->type == MESSAGE) {
+		render_message(battle, action, w, h);
+	} else if (action->type == SCREEN_REVEAL) {
 		render_screen_reveal(battle, action, w, h);
-	} else if (action->type == DEBUG_MESSAGE) {
-		render_debug_message(battle, action, w, h);
 	}
 }
 
@@ -76,11 +83,17 @@ void battle_event(struct Battle *battle, SDL_Event *e)
 {
 	if (e->type == SDL_KEYDOWN) {
 		if (e->key.keysym.sym == SDLK_p) {
-			enqueue_debug_message(&battle->queue, "DEBUG1");
-			enqueue_debug_message(&battle->queue, "DEBUG2");
-			enqueue_debug_message(&battle->queue, "DEBUG3");
-			enqueue_debug_message(&battle->queue, "DEBUG4");
+			enqueue_message(battle, &battle->queue, "DEBUG1");
+			enqueue_message(battle, &battle->queue, "DEBUG2");
+			enqueue_message(battle, &battle->queue, "DEBUG3");
+			enqueue_message(battle, &battle->queue, "DEBUG4");
 			enqueue_idle(&battle->queue);
+		} else if (e->key.keysym.sym == SDLK_SPACE) {
+			battle->key = true;
+		}
+	} if (e->type == SDL_KEYUP) {
+		if (e->key.keysym.sym == SDLK_SPACE) {
+			battle->key = false;
 		}
 	}
 }
@@ -95,11 +108,16 @@ void render_idle(struct Battle *battle, struct Node *action, int w, int h)
 {
 	/* Render the background */
 	sprite_render(&battle->s, w, h);
+	
+	/* Render text */
+	battletext_render(&battle->battletext, w, h);
 }
-void render_debug_message(struct Battle *battle, struct Node *action, int w, int h)
+void render_message(struct Battle *battle, struct Node *action, int w, int h)
 {
 	/* Render the background */
 	sprite_render(&battle->s, w, h);
+	
+	battletext_render(&battle->battletext, w, h);
 }
 void render_screen_reveal(struct Battle *battle, struct Node *action, int w, int h)
 {
@@ -123,17 +141,30 @@ void action_idle(struct Battle *battle, struct Node *action)
 			enqueue_idle(&battle->queue);
 		}
 	}
-	printf(".");
 }
-void action_debug_message(struct Battle *battle, struct Node *action)
+void action_message(struct Battle *battle, struct Node *action)
 {
-	long delta = SDL_GetTicks() - action->data.debug_message.start_time;
-	if (delta > 100) {
-		action->data.debug_message.start_time = SDL_GetTicks();
-		printf("%c", action->data.debug_message.message[action->data.debug_message.cur]);
-		action->data.debug_message.cur += 1;
-		if (action->data.debug_message.cur > strlen(action->data.debug_message.message)) {
+	if (action->data.message.cur > action->data.message.length) {
+		printf("%i\n", action->data.message.keystate);
+		if (!battle->key && action->data.message.keystate == 0)
+			action->data.message.keystate = 1;
+		else if (battle->key && action->data.message.keystate == 1)
+			action->data.message.keystate = 2;
+		else if (!battle->key && action->data.message.keystate == 2)
 			queue_dequeue(&battle->queue);
+	} else {
+		long delta = SDL_GetTicks() - action->data.message.start_time;
+		int value = 100;
+		if (battle->key == true)
+			value = 10;
+		if (delta > value) {
+			action->data.message.start_time = SDL_GetTicks();
+			
+			char buffer[100] = {0};
+			memcpy(buffer, action->data.message.buffer, action->data.message.cur);
+			battletext_set_text2(&battle->battletext, buffer);
+			
+			action->data.message.cur += 1;
 		}
 	}
 }
@@ -145,7 +176,6 @@ void action_screen_reveal(struct Battle *battle, struct Node *action)
 	
 	long delta = SDL_GetTicks() - action->data.screen_reveal.start_time;
 	sprite_set_alpha(&battle->s, (float)delta / action->data.screen_reveal.fade_time);
-	//printf("TIME: %i\n", delta);
 	
 	if (delta > action->data.screen_reveal.fade_time)
 		queue_dequeue(&battle->queue);
@@ -159,13 +189,15 @@ void enqueue_idle(struct BattleQueue *queue)
 	n.data.idle.wait_until = SDL_GetTicks() + 1000;
 	queue_enqueue(queue, n);
 }
-void enqueue_debug_message(struct BattleQueue *queue, char *str)
+void enqueue_message(struct Battle *battle, struct BattleQueue *queue, char *str)
 {
 	struct Node n;
-	n.type = DEBUG_MESSAGE;
-	n.data.debug_message.start_time = SDL_GetTicks();
-	n.data.debug_message.cur = 0;
-	strcpy(n.data.debug_message.message, str);
+	n.type = MESSAGE;
+	n.data.message.length = strlen(str);
+	n.data.message.start_time = SDL_GetTicks();
+	n.data.message.cur = 0;
+	n.data.message.keystate = 0;
+	strcpy(n.data.message.buffer, str);
 	queue_enqueue(queue, n);
 }
 void enqueue_screen_reveal(struct Battle *battle, struct BattleQueue *queue, float fade_time)
@@ -174,7 +206,6 @@ void enqueue_screen_reveal(struct Battle *battle, struct BattleQueue *queue, flo
 	n.type = SCREEN_REVEAL;
 	n.data.screen_reveal.start_time = -1;
 	n.data.screen_reveal.fade_time = fade_time * 1000;
-	printf("%i\n", n.data.screen_reveal.fade_time);
 	sprite_set_alpha(&battle->s, 0);
 	queue_enqueue(queue, n);
 }

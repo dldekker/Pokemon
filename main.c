@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <time.h>
 
+#include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_image.h>
 #include <SDL2/SDL.h>
 #include <GL/glew.h>
 
@@ -34,8 +36,12 @@ int main(int argc, char *argv[])
 	struct State state = {0};
 	
 	srand(time(NULL));
+	
+	SDL_Init(SDL_INIT_EVERYTHING);
+	IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG | IMG_INIT_TIF);
+	TTF_Init();
 
-	state.window = SDL_CreateWindow("3d", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1024, 768, SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL);
+	state.window = SDL_CreateWindow("3d", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 960, 640, SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL);
 	SDL_GLContext context = SDL_GL_CreateContext(state.window);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);

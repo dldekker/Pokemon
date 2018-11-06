@@ -3,10 +3,11 @@
 
 #include "player.h"
 #include "sprite.h"
+#include "battletext.h"
 
 enum NodeType {
 	IDLE,
-	DEBUG_MESSAGE,
+	MESSAGE,
 	SCREEN_REVEAL
 };
 
@@ -14,10 +15,12 @@ struct Node {
 	enum NodeType type;
 	union {
 		struct {
-			char message[100];
+			int keystate;
+			char buffer[100];
+			int length;
 			long start_time;
 			int cur;
-		} debug_message;
+		} message;
 		
 		struct {
 			int wait_until;
@@ -43,8 +46,11 @@ struct Battle {
 	struct BattleQueue queue;
 	
 	struct Sprite s;
+	struct BattleText battletext;
 	
 	bool new_action;
+	
+	bool key;
 };
 
 void battle_init(struct Battle *battle, struct Player *player);
